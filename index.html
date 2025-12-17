@@ -3,414 +3,645 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Stock POC Spec Wireframe</title>
+    <title>UI Spec Explorer (Final) - REQ-POC-001</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.js"></script>
     <style>
-        /* Spec Colors & Theme */
         :root {
-            --bg-dark: #1E1E1E;
-            --bg-panel: #252526;
-            --bg-header: #2D2D2D;
+            --bg-dark: #121212;
+            --bg-panel: #1E1E1E;
+            --bg-card: #252526;
             --border: #3E3E42;
+            --accent: #FF9900;
+            --highlight: #FF4D4F;
             --text-main: #E0E0E0;
             --text-muted: #858585;
-            --accent: #FF9900; /* Futu Orange */
-            --up-red: #FF4D4F;
-            --down-green: #00B578;
+        }
+        body { background-color: var(--bg-dark); color: var(--text-main); font-family: "Microsoft JhengHei", sans-serif; overflow: hidden; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Sidebar Tree */
+        .tree-item { 
+            display: flex; align-items: center; padding: 6px 12px; cursor: pointer; 
+            border-left: 2px solid transparent; color: var(--text-muted); font-size: 0.85rem;
+            transition: background 0.1s;
+        }
+        .tree-item:hover { background: #2a2a2a; color: var(--text-main); }
+        .tree-item.active { background: #2d2d30; color: var(--accent); border-left-color: var(--accent); font-weight: bold; }
+
+        /* Wireframe Box Styles */
+        .wf-container { 
+            width: 100%; height: 100%; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; background: #0f0f0f; padding: 20px; 
         }
         
-        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #121212; color: var(--text-main); overflow: hidden; }
+        .wf-box { 
+            border: 1px solid #444; 
+            background: #1a1a1a; 
+            position: relative; 
+            display: flex;
+            flex-direction: column;
+            min-height: 40px;
+            min-width: 40px;
+            transition: all 0.2s;
+        }
+        .wf-box:hover { border-color: #777; }
+        
+        .wf-box.interactive { cursor: pointer; }
+        .wf-box.interactive:hover { border-color: var(--accent); z-index: 10; }
 
-        /* Spec Overlay Styles */
-        .spec-overlay {
-            display: none;
-            position: absolute;
-            inset: 0;
-            border: 1px dashed rgba(255, 80, 80, 0.6);
-            background: rgba(255, 0, 0, 0.05);
-            z-index: 100;
+        /* Highlight State (Active Selection) */
+        .wf-box.selected-highlight {
+            border: 2px solid var(--highlight) !important;
+            background: rgba(255, 77, 79, 0.15) !important;
+            box-shadow: 0 0 15px rgba(255, 77, 79, 0.3);
+            z-index: 20;
+        }
+        .wf-box.selected-highlight .wf-label {
+            background: var(--highlight) !important;
+            color: white !important;
+        }
+        
+        .wf-label { 
+            position: absolute; top: 0; left: 0; 
+            background: #333; color: #aaa; 
+            font-size: 10px; padding: 2px 6px; 
+            border-bottom-right-radius: 4px; 
+            z-index: 5;
             pointer-events: none;
-        }
-        .spec-label-text {
-            background: #4a0f0f;
-            color: #ff9999;
-            border: 1px solid #ff4d4d;
-            padding: 2px 6px;
-            font-size: 10px;
-            font-weight: bold;
-            border-radius: 3px;
             white-space: nowrap;
-            pointer-events: auto;
         }
-        .show-specs .spec-overlay { display: block; }
-        
-        /* Positioning Helpers */
-        .pos-top-left { position: absolute; top: 0; left: 0; }
-        .pos-top-right { position: absolute; top: 0; right: 0; }
-        .pos-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-        /* Layout Components */
-        .app-window { width: 100vw; height: 100vh; display: flex; background: var(--bg-dark); }
-        .nav-bar { width: 60px; background: var(--bg-header); display: flex; flex-direction: column; align-items: center; padding-top: 10px; border-right: 1px solid var(--border); position: relative; }
-        .main-area { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .title-bar { height: 32px; background: var(--bg-header); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; px-2; position: relative; }
-        .status-bar { height: 24px; background: var(--bg-header); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 10px; font-size: 11px; color: var(--text-muted); position: relative; }
-        
-        .content-container { flex: 1; position: relative; overflow: hidden; }
-        
-        /* Common UI Elements */
-        .nav-item { width: 40px; height: 40px; margin-bottom: 10px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); font-size: 10px; }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { color: var(--accent); }
-        .nav-icon { width: 20px; height: 20px; background: currentColor; mask-size: contain; mask-repeat: no-repeat; mask-position: center; margin-bottom: 2px; }
-        
-        .panel { background: var(--bg-panel); border: 1px solid var(--border); position: relative; }
-        .stock-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border); cursor: pointer; }
-        .stock-row:hover { background: rgba(255,255,255,0.05); }
-        .stock-row.active { background: rgba(255,153,0, 0.15); }
-        
-        .text-up { color: var(--up-red); }
-        .text-down { color: var(--down-green); }
-        
-        /* Icons (Simulated with CSS shapes/text for simplicity) */
-        .icon-star::after { content: "★"; font-size: 16px; }
-        .icon-chart::after { content: "📈"; font-size: 16px; }
-        .icon-globe::after { content: "🌍"; font-size: 16px; }
-        .icon-doc::after { content: "📄"; font-size: 16px; }
+        /* Spec Mode Styles */
+        .spec-mode .wf-box { border: 1px dashed var(--highlight) !important; }
+        .spec-mode .wf-label { color: var(--highlight); font-weight: bold; }
 
-        /* Mode Layouts */
-        .mode-layout { display: none; width: 100%; height: 100%; }
-        .mode-layout.active { display: flex; }
+        /* Tree & Column Views */
+        .h-tree-item { 
+            position: relative; display: flex; align-items: center; padding: 6px 10px; margin: 4px 0;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
+            transition: all 0.2s; min-width: 180px;
+        }
+        .h-tree-item.active { border-color: var(--accent); background: rgba(255, 153, 0, 0.1); }
+        
+        .column-card { 
+            background: var(--bg-card); padding: 10px; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; 
+        }
+        .column-card.active { border-color: var(--accent); background: rgba(255, 153, 0, 0.1); }
 
+        /* Detail Panel Tags */
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 4px; margin-bottom: 6px; background: #333; color: #e0e0e0; border: 1px solid #555; }
     </style>
 </head>
-<body>
-    <!-- Controls -->
-    <div class="fixed top-4 right-4 z-[999] bg-white text-black p-2 rounded shadow-lg flex items-center gap-2">
-        <label class="flex items-center cursor-pointer select-none">
-            <input type="checkbox" id="spec-toggle" class="sr-only peer" onchange="toggleSpecs()">
-            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500 relative"></div>
-            <span class="ml-2 text-xs font-bold">顯示規格標籤</span>
-        </label>
-    </div>
+<body class="flex flex-col h-screen">
 
-    <div class="app-window">
-        <!-- 1. Navigation Bar -->
-        <div class="nav-bar">
-            <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">導航列</span></div></div>
-            
-            <div class="nav-item active" onclick="setMode('watchlist')" id="nav-watchlist">
-                <div class="icon-star"></div><span>自選</span>
-            </div>
-            <div class="nav-item" onclick="setMode('quotes')" id="nav-quotes">
-                <div class="icon-chart"></div><span>行情</span>
-            </div>
-            <div class="nav-item" onclick="setMode('market')" id="nav-market">
-                <div class="icon-globe"></div><span>市場</span>
-            </div>
-            <div class="nav-item" onclick="setMode('trade')" id="nav-trade">
-                <div class="icon-doc"></div><span>交易</span>
+    <!-- Header -->
+    <header class="h-14 bg-[#1E1E1E] border-b border-[#3E3E42] flex items-center justify-between px-4 shrink-0 z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded flex items-center justify-center text-white font-bold">U</div>
+            <div>
+                <h1 class="font-bold text-sm text-white">UI Spec Explorer</h1>
+                <div class="text-[10px] text-gray-400">REQ-POC-001 (Final)</div>
             </div>
         </div>
+        
+        <div class="flex items-center gap-4">
+            <label class="flex items-center cursor-pointer select-none gap-2 bg-[#121212] px-3 py-1.5 rounded border border-[#3E3E42] hover:border-gray-500 transition-colors">
+                <input type="checkbox" id="spec-toggle" class="sr-only peer" onchange="toggleSpecMode()">
+                <div class="w-8 h-4 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-red-500 relative flex items-center"></div>
+                <span class="text-xs font-bold text-gray-300 peer-checked:text-red-400">顯示規格標籤</span>
+            </label>
 
-        <div class="main-area">
-            <!-- 2. Title Bar -->
-            <div class="title-bar px-4">
-                <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">標題列</span></div></div>
-                <span class="font-bold text-sm">美股看盤系統 POC</span>
-                <div class="flex gap-2">
-                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                </div>
+            <div class="flex bg-[#121212] p-1 rounded-lg border border-[#3E3E42]">
+                <button onclick="setView('wireframe')" id="btn-wireframe" class="view-btn px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors">
+                    <i data-lucide="layout-template" class="w-3 h-3"></i> Wireframe
+                </button>
+                <button onclick="setView('tree')" id="btn-tree" class="view-btn px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors">
+                    <i data-lucide="git-fork" class="w-3 h-3"></i> 結構樹
+                </button>
+                <button onclick="setView('column')" id="btn-column" class="view-btn px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors">
+                    <i data-lucide="columns" class="w-3 h-3"></i> 看板
+                </button>
             </div>
+        </div>
+    </header>
 
-            <!-- 3. Content Area -->
-            <div class="content-container">
-                
-                <!-- MODE A: WATCHLIST (自選模式) -->
-                <div id="mode-watchlist" class="mode-layout active">
-                    <!-- Left Panel -->
-                    <div class="w-[280px] flex flex-col border-r border-[#3E3E42]">
-                        <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">自選模式.左側面板</span></div></div>
-                        
-                        <!-- Group Shortcuts -->
-                        <div class="h-8 flex items-center px-2 border-b border-[#3E3E42] text-xs gap-2 overflow-x-auto">
-                            <span class="text-[#FF9900] border-b border-[#FF9900]">全部</span>
-                            <span class="text-gray-400 hover:text-white cursor-pointer">常用</span>
-                            <span class="text-gray-400 hover:text-white cursor-pointer">ETF</span>
-                        </div>
-                        
-                        <!-- Stock List -->
-                        <div class="flex-1 overflow-y-auto">
-                            <div class="stock-row active">
-                                <div>
-                                    <div class="font-bold text-sm">AAPL</div>
-                                    <div class="text-[10px] text-gray-400">Apple Inc.</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm text-up">189.50</div>
-                                    <div class="text-[10px] text-up">+1.2%</div>
-                                </div>
-                            </div>
-                            <div class="stock-row">
-                                <div>
-                                    <div class="font-bold text-sm">NVDA</div>
-                                    <div class="text-[10px] text-gray-400">NVIDIA</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm text-up">485.10</div>
-                                    <div class="text-[10px] text-up">+2.5%</div>
-                                </div>
-                            </div>
-                            <div class="stock-row">
-                                <div>
-                                    <div class="font-bold text-sm">TSLA</div>
-                                    <div class="text-[10px] text-gray-400">Tesla</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm text-down">240.20</div>
-                                    <div class="text-[10px] text-down">-0.8%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Center Panel -->
-                    <div class="flex-1 flex flex-col bg-[#1E1E1E]">
-                        <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">自選模式.中央區域</span></div></div>
-                        
-                        <!-- Toolbar -->
-                        <div class="h-8 border-b border-[#3E3E42] flex items-center px-2 justify-between">
-                            <div class="flex gap-2 text-xs text-gray-400">
-                                <span class="text-white">日K</span><span>週K</span><span>月K</span><span>1分</span>
-                            </div>
-                            <div class="flex gap-2 text-xs text-gray-400">
-                                <span class="text-[#FF9900]">MACD</span><span>KDJ</span><span>RSI</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Chart Area -->
-                        <div class="flex-1 relative flex items-center justify-center border-b border-[#3E3E42]">
-                            <div class="spec-overlay"><div class="pos-center"><span class="spec-label-text">K線圖</span></div></div>
-                            <div class="text-gray-600 text-sm">[ K-Line Chart Placeholder ]</div>
-                            <!-- Simulated Candles -->
-                            <div class="absolute bottom-10 left-10 flex items-end gap-1 opacity-50">
-                                <div class="w-2 h-20 bg-red-500"></div>
-                                <div class="w-2 h-16 bg-green-500"></div>
-                                <div class="w-2 h-24 bg-red-500"></div>
-                                <div class="w-2 h-10 bg-green-500"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Indicator Area -->
-                        <div class="h-[150px] relative flex items-center justify-center">
-                            <div class="spec-overlay"><div class="pos-center"><span class="spec-label-text">技術指標圖 (MACD)</span></div></div>
-                            <div class="text-gray-600 text-sm">[ Indicator Chart ]</div>
-                        </div>
-                    </div>
-
-                    <!-- Right Panel -->
-                    <div class="w-[300px] border-l border-[#3E3E42] flex flex-col bg-[#252526]">
-                        <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">自選模式.右側面板</span></div></div>
-                        
-                        <!-- Tabs -->
-                        <div class="flex border-b border-[#3E3E42] text-xs">
-                            <div class="flex-1 py-2 text-center text-[#FF9900] border-b-2 border-[#FF9900]">報價</div>
-                            <div class="flex-1 py-2 text-center text-gray-400">分析</div>
-                            <div class="flex-1 py-2 text-center text-gray-400">資訊</div>
-                        </div>
-                        
-                        <!-- Quote Details -->
-                        <div class="p-4">
-                            <div class="text-2xl font-bold text-up">189.50</div>
-                            <div class="flex gap-4 text-xs mt-1">
-                                <span class="text-up">+2.30</span>
-                                <span class="text-up">+1.23%</span>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-2 mt-4 text-xs text-gray-400">
-                                <div>高 190.00</div>
-                                <div>開 188.00</div>
-                                <div>低 187.50</div>
-                                <div>收 187.20</div>
-                            </div>
-                            
-                            <div class="mt-4 border-t border-[#3E3E42] pt-2">
-                                <div class="text-xs text-gray-500 mb-1">五檔報價</div>
-                                <div class="flex justify-between text-xs"><span class="text-red-400">賣1</span> <span>189.55</span></div>
-                                <div class="flex justify-between text-xs"><span class="text-green-400">買1</span> <span>189.50</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODE B: QUOTES (行情模式) -->
-                <div id="mode-quotes" class="mode-layout">
-                    <!-- Left: Big Table -->
-                    <div class="flex-1 flex flex-col">
-                        <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">行情模式.中央區域 (表格)</span></div></div>
-                        
-                        <!-- Category Bar -->
-                        <div class="h-10 border-b border-[#3E3E42] flex items-center px-4 gap-4 text-sm">
-                            <span class="text-[#FF9900] font-bold">自選股</span>
-                            <span class="text-gray-400">標普500</span>
-                            <span class="text-gray-400">那斯達克</span>
-                        </div>
-                        
-                        <!-- Grid Header -->
-                        <div class="h-8 bg-[#2D2D2D] flex items-center px-2 text-xs text-gray-400 border-b border-[#3E3E42]">
-                            <div class="w-10">序號</div>
-                            <div class="w-20">代碼</div>
-                            <div class="w-32">名稱</div>
-                            <div class="w-20 text-right">現價</div>
-                            <div class="w-20 text-right">漲跌幅</div>
-                            <div class="w-24 text-right">成交量</div>
-                        </div>
-                        
-                        <!-- Grid Rows -->
-                        <div class="flex-1 overflow-y-auto bg-[#1E1E1E]">
-                            <div class="flex items-center px-2 h-10 border-b border-[#3E3E42] text-sm hover:bg-[#333]">
-                                <div class="w-10 text-gray-500">1</div>
-                                <div class="w-20 font-bold">AAPL</div>
-                                <div class="w-32 text-gray-400">Apple Inc.</div>
-                                <div class="w-20 text-right text-up">189.50</div>
-                                <div class="w-20 text-right text-up">+1.2%</div>
-                                <div class="w-24 text-right text-gray-400">50M</div>
-                            </div>
-                            <div class="flex items-center px-2 h-10 border-b border-[#3E3E42] text-sm hover:bg-[#333]">
-                                <div class="w-10 text-gray-500">2</div>
-                                <div class="w-20 font-bold">TSLA</div>
-                                <div class="w-32 text-gray-400">Tesla</div>
-                                <div class="w-20 text-right text-down">240.20</div>
-                                <div class="w-20 text-right text-down">-0.8%</div>
-                                <div class="w-24 text-right text-gray-400">32M</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Right: Shared Panel -->
-                    <div class="w-[300px] border-l border-[#3E3E42] bg-[#252526] relative">
-                        <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">行情模式.右側面板 (Shared)</span></div></div>
-                        <div class="p-4 text-center text-gray-500 mt-10">
-                            (共用自選模式的右側面板)
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODE C: MARKET (市場模式) -->
-                <div id="mode-market" class="mode-layout flex-col p-4 gap-4 overflow-y-auto">
-                    <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">市場模式</span></div></div>
-
-                    <!-- Top: Indices -->
-                    <div class="grid grid-cols-4 gap-4 h-[120px]">
-                        <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">四大指數</span></div></div>
-                        
-                        <div class="panel p-3 flex flex-col justify-between rounded">
-                            <div class="text-sm text-gray-400">道瓊工業</div>
-                            <div class="text-xl font-bold text-up">35,400.20</div>
-                            <div class="text-xs text-up">+0.45%</div>
-                        </div>
-                        <div class="panel p-3 flex flex-col justify-between rounded">
-                            <div class="text-sm text-gray-400">納斯達克</div>
-                            <div class="text-xl font-bold text-up">14,200.50</div>
-                            <div class="text-xs text-up">+0.80%</div>
-                        </div>
-                        <div class="panel p-3 flex flex-col justify-between rounded">
-                            <div class="text-sm text-gray-400">標普 500</div>
-                            <div class="text-xl font-bold text-up">4,560.00</div>
-                            <div class="text-xs text-up">+0.60%</div>
-                        </div>
-                        <div class="panel p-3 flex flex-col justify-between rounded">
-                            <div class="text-sm text-gray-400">費城半導體</div>
-                            <div class="text-xl font-bold text-down">3,700.10</div>
-                            <div class="text-xs text-down">-0.20%</div>
-                        </div>
-                    </div>
-
-                    <!-- Bottom Area -->
-                    <div class="flex-1 flex gap-4 min-h-[400px]">
-                        <!-- Left Bottom -->
-                        <div class="flex-1 flex flex-col gap-4">
-                            <!-- Heatmap -->
-                            <div class="flex-1 panel p-2 relative">
-                                <div class="spec-overlay"><div class="pos-center"><span class="spec-label-text">投資風格箱 (九宮格)</span></div></div>
-                                <div class="text-xs text-gray-400 mb-2">投資風格箱</div>
-                                <div class="grid grid-cols-3 grid-rows-3 gap-1 h-[calc(100%-20px)]">
-                                    <div class="bg-red-900/40 flex items-center justify-center text-xs">大/價</div>
-                                    <div class="bg-red-900/60 flex items-center justify-center text-xs">大/均</div>
-                                    <div class="bg-green-900/40 flex items-center justify-center text-xs">大/成</div>
-                                    <!-- ... others ... -->
-                                </div>
-                            </div>
-                            <!-- Sectors -->
-                            <div class="h-[150px] panel p-2 relative">
-                                <div class="spec-overlay"><div class="pos-center"><span class="spec-label-text">產業表現</span></div></div>
-                                <div class="text-xs text-gray-400 mb-2">產業表現</div>
-                                <div class="space-y-2">
-                                    <div class="flex items-center text-xs"><span class="w-12">科技</span> <div class="w-32 h-2 bg-red-600 rounded"></div></div>
-                                    <div class="flex items-center text-xs"><span class="w-12">金融</span> <div class="w-20 h-2 bg-red-800 rounded"></div></div>
-                                    <div class="flex items-center text-xs"><span class="w-12">能源</span> <div class="w-10 h-2 bg-green-800 rounded"></div></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Bottom -->
-                        <div class="w-[300px] panel p-2 relative">
-                            <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">熱門選股 & 漲跌分佈</span></div></div>
-                            <div class="text-xs text-gray-400 mb-2">漲跌分佈</div>
-                            <div class="h-[100px] flex items-end justify-between px-2 gap-1 border-b border-[#3E3E42] pb-2 mb-2">
-                                <div class="w-2 h-4 bg-green-600"></div>
-                                <div class="w-2 h-8 bg-green-500"></div>
-                                <div class="w-2 h-16 bg-gray-500"></div>
-                                <div class="w-2 h-10 bg-red-500"></div>
-                                <div class="w-2 h-6 bg-red-600"></div>
-                            </div>
-                            
-                            <div class="text-xs text-gray-400 mb-2">熱門榜單</div>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-xs"><span class="text-white">AMD</span> <span class="text-up">+5.2%</span></div>
-                                <div class="flex justify-between text-xs"><span class="text-white">INTC</span> <span class="text-up">+3.1%</span></div>
-                                <div class="flex justify-between text-xs"><span class="text-white">GOOG</span> <span class="text-down">-1.2%</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+    <!-- Main Layout -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar -->
+        <div class="w-[260px] bg-[#1E1E1E] border-r border-[#3E3E42] flex flex-col shrink-0">
+            <div class="p-3 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-[#3E3E42] flex justify-between items-center">
+                <span>架構導航</span>
             </div>
+            <div id="tree-nav" class="flex-1 overflow-y-auto py-2"></div>
+        </div>
 
-            <!-- 4. Status Bar -->
-            <div class="status-bar justify-between">
-                <div class="spec-overlay"><div class="pos-top-left"><span class="spec-label-text">狀態列</span></div></div>
-                <div class="flex gap-4">
-                    <span>● 已連線 (QuoteServer)</span>
-                    <span>延遲: 24ms</span>
-                </div>
-                <div>最後更新: 16:00:02</div>
+        <!-- Center Viewport -->
+        <div id="viewport" class="flex-1 bg-[#0f0f0f] relative overflow-hidden flex flex-col">
+            <div id="breadcrumb" class="h-9 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4 text-xs text-gray-400 gap-2 shrink-0"></div>
+            <div id="viz-content" class="flex-1 overflow-auto relative p-4"></div>
+        </div>
+
+        <!-- Right Details -->
+        <div class="w-[320px] bg-[#1E1E1E] border-l border-[#3E3E42] flex flex-col shrink-0">
+            <div class="p-4 border-b border-[#3E3E42] bg-[#252526]">
+                <h2 class="font-bold text-[#FF9900] text-sm flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4"></i> 規格詳情
+                </h2>
+            </div>
+            <div id="detail-panel" class="p-4 overflow-y-auto flex-1">
+                <!-- Content injected here -->
             </div>
         </div>
     </div>
 
     <script>
-        function setMode(modeId) {
-            // Hide all modes
-            document.querySelectorAll('.mode-layout').forEach(el => el.classList.remove('active'));
-            // Show selected mode
-            document.getElementById('mode-' + modeId).classList.add('active');
-            
-            // Update Nav Active State
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById('nav-' + modeId).classList.add('active');
+        // ------------------------------------------------------------------
+        // 1. Data Model
+        // ------------------------------------------------------------------
+        const specData = {
+            id: "root", name: "美股看盤系統 POC", type: "root", desc: "主視窗容器，深色主題，參考富途牛牛",
+            children: [
+                {
+                    id: "shell", name: "共用外殼 (Shell)", type: "group", desc: "所有模式共用的視窗框架",
+                    children: [
+                        { id: "titlebar", name: "標題列", type: "component", desc: "應用程式標題與視窗控制按鈕", content: ["左側：應用程式名稱", "右側：最小化/最大化/關閉"], shared: true },
+                        { id: "navbar", name: "導航列", type: "component", desc: "主要功能模式切換", content: ["自選 (Star)", "行情 (Chart)", "市場 (Globe)", "交易 (Doc)"], interaction: ["點擊切換模式", "選中狀態有視覺提示"], shared: true },
+                        { id: "statusbar", name: "狀態列", type: "component", desc: "系統狀態資訊", content: ["連線狀態", "最後更新時間"], shared: true }
+                    ]
+                },
+                {
+                    id: "watchlist", name: "自選模式 (Watchlist)", type: "mode", desc: "顯示自選股列表、K線圖、報價面板",
+                    children: [
+                        {
+                            id: "wl-left", name: "左側面板", type: "container", desc: "列表與群組區域",
+                            children: [
+                                { id: "wl-group", name: "群組快捷列", type: "component", desc: "切換自選股群組", content: ["全部", "常用股票", "ETF", "1-5"], interaction: ["點擊切換群組", "底線指示"] },
+                                { id: "wl-list", name: "自選股列表", type: "component", desc: "顯示當前群組的股票清單", content: ["股票名稱", "迷你走勢圖", "現價", "漲跌幅"], interaction: ["點擊更新K線與報價", "高亮背景"], colorRule: "上漲紅/下跌綠" }
+                            ]
+                        },
+                        {
+                            id: "wl-center", name: "中央區域", type: "container", desc: "技術分析區域",
+                            children: [
+                                { id: "wl-toolbar", name: "K線工具列", type: "component", desc: "K 線圖上方的操作按鈕", content: ["週期切換 (分時/日/週...)", "指標切換 (MACD/KDJ...)"] },
+                                { id: "wl-chart", name: "K線圖", type: "component", desc: "股票價格走勢圖", content: ["蠟燭圖", "均線", "成交量"], interaction: ["十字游標", "滾輪縮放", "拖曳平移"] },
+                                { id: "wl-indicator", name: "技術指標圖", type: "component", desc: "K 線圖下方的技術指標", content: ["MACD", "KDJ", "RSI"] }
+                            ]
+                        },
+                        {
+                            id: "wl-right", name: "右側面板", type: "container", desc: "股票詳細資訊面板",
+                            children: [
+                                { id: "wl-quote", name: "報價頁籤", type: "component", desc: "股票即時報價資訊", content: ["現價(大字)", "漲跌幅", "五檔報價", "分時走勢"] },
+                                { id: "wl-analysis", name: "分析頁籤", type: "component", desc: "股票分析資訊", content: ["達人觀點", "AI 看法", "價值河流圖"] },
+                                { id: "wl-info", name: "資訊頁籤", type: "component", desc: "相關新聞", content: ["新聞列表"] },
+                                { id: "wl-comment", name: "評論頁籤", type: "component", desc: "用戶討論", content: ["討論列表"] }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: "quotes", name: "行情模式 (Quotes)", type: "mode", desc: "顯示大型行情報價表格",
+                    children: [
+                        { id: "qt-filter", name: "商品分類列", type: "component", desc: "切換不同商品分類", content: ["自選股", "標普500", "那斯達克", "貴金屬"] },
+                        { id: "qt-group", name: "群組快捷列", type: "component", desc: "切換自選股群組", content: ["群組 01-05"] },
+                        { id: "qt-grid", name: "行情表格", type: "component", desc: "大型報價表格 (Grid)", content: ["序號", "代碼", "名稱", "現價", "漲跌幅", "成交量"], interaction: ["點擊更新右側面板"], colorRule: "紅漲綠跌" },
+                        { id: "qt-right", name: "右側面板 (Shared)", type: "component", desc: "與自選模式共用報價面板", shared: true }
+                    ]
+                },
+                {
+                    id: "market", name: "市場模式 (Market)", type: "mode", desc: "顯示市場總覽",
+                    children: [
+                        { id: "mk-top", name: "四大指數", type: "component", desc: "主要指數卡片", content: ["納斯達克", "標普500", "道瓊", "費半"] },
+                        {
+                            id: "mk-bottom", name: "下半部", type: "container", desc: "市場概況",
+                            children: [
+                                { id: "mk-heatmap", name: "投資風格箱", type: "component", desc: "3x3 九宮格熱力圖", content: ["價值/均衡/成長", "大型/中型/小型"] },
+                                { id: "mk-sector", name: "產業表現", type: "component", desc: "各產業漲跌幅水平柱狀圖", content: ["醫療", "消費", "能源", "科技..."] },
+                                { id: "mk-news", name: "新聞列表", type: "component", desc: "市場相關新聞", content: ["時間", "標題", "標籤"] }
+                            ]
+                        },
+                        {
+                            id: "mk-right", name: "右側區域", type: "container", desc: "排行與分佈",
+                            children: [
+                                { id: "mk-dist", name: "漲跌分佈", type: "component", desc: "個股漲跌幅分佈直方圖", content: ["漲跌幅區間"] },
+                                { id: "mk-rank", name: "熱門選股", type: "component", desc: "漲跌幅排行榜", content: ["日漲幅榜", "日跌幅榜"] }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: "trade", name: "交易模式 (Trade)", type: "mode", desc: "預留，本次不實作", children: []
+                }
+            ]
+        };
+
+        const nodeMap = {};
+        function mapNodes(node, parent = null) {
+            node.parent = parent;
+            nodeMap[node.id] = node;
+            if (node.children) node.children.forEach(c => mapNodes(c, node));
+        }
+        mapNodes(specData);
+
+        // ------------------------------------------------------------------
+        // 2. Logic Controller
+        // ------------------------------------------------------------------
+        let currentView = 'wireframe';
+        let selectedNodeId = 'root';
+
+        function setView(view) {
+            currentView = view;
+            updateViewButtons();
+            document.getElementById('breadcrumb').style.display = view === 'wireframe' ? 'flex' : 'none';
+            renderViz();
         }
 
-        function toggleSpecs() {
-            const body = document.body;
-            if (document.getElementById('spec-toggle').checked) {
-                body.classList.add('show-specs');
-            } else {
-                body.classList.remove('show-specs');
-            }
+        function updateViewButtons() {
+            ['wireframe', 'tree', 'column'].forEach(v => {
+                const btn = document.getElementById(`btn-${v}`);
+                const isActive = v === currentView;
+                btn.className = `view-btn px-3 py-1.5 rounded text-xs font-medium flex items-center gap-2 transition-colors ${isActive ? 'bg-[#FF9900] text-black' : 'text-gray-400 hover:text-white'}`;
+            });
         }
+
+        function toggleSpecMode() {
+            const chk = document.getElementById('spec-toggle');
+            const content = document.getElementById('viz-content');
+            if (chk.checked) content.classList.add('spec-mode');
+            else content.classList.remove('spec-mode');
+        }
+
+        function selectNode(id) {
+            selectedNodeId = id;
+            renderTreeNav(); 
+            renderDetail();
+            renderViz();
+        }
+
+        // ------------------------------------------------------------------
+        // 3. Renderers
+        // ------------------------------------------------------------------
+
+        function renderTreeNav() {
+            const container = document.getElementById('tree-nav');
+            container.innerHTML = ''; 
+            
+            function createItem(node, level) {
+                const div = document.createElement('div');
+                const isActive = node.id === selectedNodeId;
+                div.className = `tree-item ${isActive ? 'active' : ''}`;
+                div.style.paddingLeft = `${level * 16 + 12}px`;
+                div.onclick = (e) => { e.stopPropagation(); selectNode(node.id); };
+                
+                let icon = 'box';
+                if (node.type === 'root') icon = 'monitor';
+                else if (node.type === 'mode') icon = 'layout';
+                else if (node.type === 'container') icon = 'layers';
+                else if (node.type === 'group') icon = 'group';
+                
+                div.innerHTML = `
+                    <i data-lucide="${icon}" class="w-3 h-3 mr-2 opacity-70"></i>
+                    <span>${node.name}</span>
+                `;
+                container.appendChild(div);
+
+                if (node.children) {
+                    node.children.forEach(child => createItem(child, level + 1));
+                }
+            }
+            createItem(specData, 0);
+            lucide.createIcons();
+        }
+
+        function renderDetail() {
+            const node = nodeMap[selectedNodeId];
+            const container = document.getElementById('detail-panel');
+            
+            // Clean render without external animation classes to avoid bugs
+            let html = `
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] bg-[#333] text-gray-400 px-1.5 py-0.5 rounded uppercase tracking-wide border border-[#444]">${node.type}</span>
+                        ${node.shared ? '<span class="text-[10px] bg-blue-900/50 text-blue-200 px-1.5 py-0.5 rounded border border-blue-800">Shared</span>' : ''}
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">${node.name}</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">${node.desc || '無描述'}</p>
+                </div>
+            `;
+
+            if (node.content && node.content.length > 0) {
+                html += `
+                    <div class="mb-4">
+                        <label class="text-xs text-[#FF9900] font-bold block mb-2">包含內容</label>
+                        <div class="flex flex-wrap gap-1">
+                            ${node.content.map(c => `<span class="tag">${c}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (node.interaction) {
+                html += `
+                    <div class="mb-4">
+                        <label class="text-xs text-[#FF9900] font-bold block mb-2">互動行為</label>
+                        <ul class="list-disc list-inside text-sm text-gray-300 space-y-1">
+                            ${node.interaction.map(i => `<li>${i}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (node.colorRule) {
+                html += `
+                    <div class="mb-4">
+                        <label class="text-xs text-[#FF9900] font-bold block mb-2">顏色規則</label>
+                        <div class="text-sm text-gray-300 border-l-2 border-[#FF9900] pl-2">${node.colorRule}</div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function renderViz() {
+            const container = document.getElementById('viz-content');
+            container.innerHTML = ''; 
+            const chk = document.getElementById('spec-toggle');
+            if (chk.checked) container.classList.add('spec-mode');
+            else container.classList.remove('spec-mode');
+
+            if (currentView === 'wireframe') {
+                renderWireframeMode(container);
+            } else if (currentView === 'tree') {
+                renderTreeView(container);
+            } else {
+                renderColumnView(container);
+            }
+            lucide.createIcons();
+        }
+
+        // --- Improved Wireframe Logic: Contextual Rendering ---
+        function renderWireframeMode(container) {
+            const currentNode = nodeMap[selectedNodeId];
+            
+            // 1. Determine Layout Root (Drill Up if leaf)
+            // If the current node is a leaf (component), we want to show its PARENT's layout,
+            // but highlight the current node.
+            let layoutNode = currentNode;
+            let highlightId = null;
+
+            // List of IDs that have dedicated layouts defined below
+            const layouts = ['root', 'shell', 'watchlist', 'wl-left', 'wl-center', 'wl-right', 'quotes', 'market', 'wl-left', 'qt-grid'];
+            
+            // If current node is NOT a container/layout, move up
+            if (!layouts.includes(currentNode.id) && currentNode.parent && currentNode.id !== 'root') {
+                // Special check: if it's a child of a layout, use parent
+                if (layouts.includes(currentNode.parent.id)) {
+                    layoutNode = currentNode.parent;
+                    highlightId = currentNode.id;
+                }
+            }
+
+            // Breadcrumb
+            const breadcrumb = document.getElementById('breadcrumb');
+            let path = [];
+            let curr = currentNode; // Breadcrumb follows actual selection
+            while(curr) { path.unshift(curr); curr = curr.parent; }
+            breadcrumb.innerHTML = path.map((p, idx) => `
+                <span class="cursor-pointer hover:text-white ${idx === path.length-1 ? 'text-white font-bold' : ''}" 
+                      onclick="selectNode('${p.id}')">${p.name}</span>
+                ${idx < path.length-1 ? '<i data-lucide="chevron-right" class="w-3 h-3"></i>' : ''}
+            `).join('');
+
+
+            const wfWrapper = document.createElement('div');
+            wfWrapper.className = "wf-container";
+            
+            // Helper to generate box HTML
+            // If id matches highlightId, add 'selected-highlight' class
+            const box = (id, label, extraClass = "") => {
+                const isHighlight = id === highlightId || id === selectedNodeId;
+                const hlClass = (id === highlightId) ? "selected-highlight" : "";
+                // Note: we use event.stopPropagation to prevent bubbling
+                return `<div class="wf-box interactive ${extraClass} ${hlClass}" onclick="event.stopPropagation(); selectNode('${id}')"><div class="wf-label">${label}</div>`;
+            };
+            const closeBox = `</div>`;
+
+            let html = '';
+
+            // --- Layout Definitions ---
+            
+            if (layoutNode.id === 'root') {
+                html = `
+                    <div class="w-[800px] h-[500px] border border-gray-600 bg-[#1E1E1E] flex flex-col relative shadow-2xl">
+                        <div class="wf-label">主視窗 (Root)</div>
+                        ${box('shell', 'Shell (標題列)', 'h-8 border-b border-[#333] flex items-center justify-center bg-[#252526] text-gray-500 text-xs')}(標題列區域)${closeBox}
+                        <div class="flex-1 flex">
+                            ${box('shell', 'Shell (導航)', 'w-12 border-r border-[#333] flex items-center justify-center bg-[#252526] text-gray-500 text-xs')}(導航)${closeBox}
+                            <div class="flex-1 flex flex-col items-center justify-center text-gray-600 bg-[#121212] gap-4">
+                                <div class="text-center">
+                                    <p class="text-lg text-gray-400">內容區域</p>
+                                    <p class="text-xs mt-2 text-gray-600">請選擇下方模式查看細節</p>
+                                </div>
+                                <div class="flex gap-4">
+                                    <button class="px-4 py-2 bg-[#333] rounded border border-[#555] hover:border-[#FF9900] text-sm text-gray-300" onclick="event.stopPropagation(); selectNode('watchlist')">自選模式</button>
+                                    <button class="px-4 py-2 bg-[#333] rounded border border-[#555] hover:border-[#FF9900] text-sm text-gray-300" onclick="event.stopPropagation(); selectNode('quotes')">行情模式</button>
+                                    <button class="px-4 py-2 bg-[#333] rounded border border-[#555] hover:border-[#FF9900] text-sm text-gray-300" onclick="event.stopPropagation(); selectNode('market')">市場模式</button>
+                                </div>
+                            </div>
+                        </div>
+                        ${box('shell', 'Shell (狀態列)', 'h-6 border-t border-[#333] flex items-center justify-center bg-[#252526] text-gray-500 text-xs')}(狀態列區域)${closeBox}
+                    </div>
+                `;
+            } 
+            else if (layoutNode.id === 'shell') {
+                html = `
+                    <div class="w-[800px] h-[500px] border border-gray-600 bg-[#1E1E1E] flex flex-col relative">
+                        <div class="wf-label">Shell 層級視圖</div>
+                        ${box('titlebar', '標題列', 'h-10 mb-2 p-2 flex justify-between items-center px-4')}
+                            <span class="text-sm text-white">美股看盤系統</span>
+                            <div class="flex gap-2"><div class="w-3 h-3 bg-red-500 rounded-full"></div></div>
+                        ${closeBox}
+                        <div class="flex-1 flex gap-2">
+                            ${box('navbar', '導航列', 'w-16 h-full p-2 flex flex-col items-center gap-4 pt-8')}
+                                <div class="w-6 h-6 bg-gray-600 rounded"></div>
+                                <div class="w-6 h-6 bg-gray-600 rounded"></div>
+                            ${closeBox}
+                            <div class="flex-1 border border-dashed border-gray-700 flex items-center justify-center text-gray-600">
+                                (內容區域 - 非 Shell 範圍)
+                            </div>
+                        </div>
+                        ${box('statusbar', '狀態列', 'h-8 mt-2 p-2 flex items-center px-4 justify-between')}
+                            <span class="text-xs text-green-500">● 連線正常</span>
+                            <span class="text-xs text-gray-500">16:00:00</span>
+                        ${closeBox}
+                    </div>
+                `;
+            }
+            else if (layoutNode.id === 'watchlist') {
+                html = `
+                    <div class="w-full h-full max-w-[900px] max-h-[600px] flex gap-2 p-4 border border-[#333] bg-[#121212] relative">
+                        <div class="wf-label">自選模式 (Watchlist)</div>
+                        ${box('wl-left', '左側面板', 'w-[200px] h-full p-4 space-y-2')}
+                            <div class="h-6 bg-[#333] rounded w-full mt-4"></div>
+                            <div class="h-6 bg-[#333] rounded w-full"></div>
+                        ${closeBox}
+                        ${box('wl-center', '中央區域', 'flex-1 h-full p-4 flex flex-col gap-2')}
+                            <div class="h-8 bg-[#333] rounded w-full mt-4"></div>
+                            <div class="flex-1 bg-[#222] border border-[#333] flex items-center justify-center text-gray-600">K線圖</div>
+                        ${closeBox}
+                        ${box('wl-right', '右側面板', 'w-[240px] h-full p-4 space-y-2')}
+                            <div class="h-8 bg-[#333] rounded w-full mt-4 mb-4"></div>
+                            <div class="h-4 bg-[#333] rounded w-1/2"></div>
+                        ${closeBox}
+                    </div>
+                `;
+            }
+            else if (layoutNode.id === 'wl-left') {
+                html = `
+                    <div class="w-[300px] h-[500px] wf-box flex flex-col p-2 relative">
+                        <div class="wf-label">左側面板 (內部結構)</div>
+                        ${box('wl-group', '群組快捷列', 'h-12 mb-2 flex items-center justify-around px-2 mt-4')}
+                            <div class="w-8 h-4 bg-gray-500 rounded"></div>
+                            <div class="w-8 h-4 bg-gray-500 rounded"></div>
+                        ${closeBox}
+                        ${box('wl-list', '自選股列表', 'flex-1 p-2')}
+                            <div class="space-y-2 mt-4">
+                                <div class="flex justify-between border-b border-gray-700 pb-1"><span class="text-white text-xs">AAPL</span> <span class="text-red-500 text-xs">+1.2%</span></div>
+                                <div class="flex justify-between border-b border-gray-700 pb-1"><span class="text-white text-xs">TSLA</span> <span class="text-green-500 text-xs">-0.5%</span></div>
+                            </div>
+                        ${closeBox}
+                    </div>
+                `;
+            }
+            else if (layoutNode.id === 'wl-center') {
+                html = `
+                    <div class="w-[500px] h-[500px] wf-box flex flex-col p-2 relative">
+                        <div class="wf-label">中央區域 (內部結構)</div>
+                        ${box('wl-toolbar', 'K線工具列', 'h-10 mb-2 mt-4 bg-[#252526]')}${closeBox}
+                        ${box('wl-chart', 'K線圖', 'flex-1 mb-2 bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-600')}Chart Area${closeBox}
+                        ${box('wl-indicator', '技術指標圖', 'h-24 bg-[#1a1a1a] border border-[#333]')}${closeBox}
+                    </div>
+                `;
+            }
+            else if (layoutNode.id === 'wl-right') {
+                html = `
+                    <div class="w-[300px] h-[500px] wf-box flex flex-col p-2 relative">
+                        <div class="wf-label">右側面板 (內部結構)</div>
+                        <div class="flex gap-1 mt-4 mb-2">
+                            ${box('wl-quote', '報價', 'flex-1 h-8 text-[10px] flex items-center justify-center')}${closeBox}
+                            ${box('wl-analysis', '分析', 'flex-1 h-8 text-[10px] flex items-center justify-center')}${closeBox}
+                            ${box('wl-info', '資訊', 'flex-1 h-8 text-[10px] flex items-center justify-center')}${closeBox}
+                        </div>
+                        <div class="flex-1 border border-dashed border-gray-700 p-2 text-xs text-gray-500">
+                           (Tab Content Area)
+                        </div>
+                    </div>
+                `;
+            }
+            else if (layoutNode.id === 'quotes') {
+                html = `
+                    <div class="w-full h-full max-w-[900px] max-h-[600px] flex gap-2 p-4 border border-[#333] bg-[#121212] relative">
+                        <div class="wf-label">行情模式 (Quotes)</div>
+                        <div class="flex-1 flex flex-col gap-2">
+                            ${box('qt-filter', '商品分類列', 'h-10 mt-2')}${closeBox}
+                            ${box('qt-grid', '行情表格', 'flex-1 p-8 text-gray-500 text-center')}Data Grid${closeBox}
+                        </div>
+                        ${box('qt-right', '右側面板 (Shared)', 'w-[240px]')}${closeBox}
+                    </div>
+                `;
+            }
+            else if (layoutNode.id === 'market') {
+                html = `
+                    <div class="w-full h-full max-w-[900px] max-h-[600px] flex gap-2 p-4 border border-[#333] bg-[#121212] relative overflow-hidden">
+                        <div class="wf-label">市場模式 (Market)</div>
+                        <div class="flex-1 flex flex-col gap-2">
+                            ${box('mk-top', '四大指數', 'h-24 mt-2')}${closeBox}
+                            ${box('mk-bottom', '下半部 (風格/產業/新聞)', 'flex-1')}${closeBox}
+                        </div>
+                        ${box('mk-right', '右側區域 (排行)', 'w-[200px]')}${closeBox}
+                    </div>
+                `;
+            }
+            else {
+                // Fallback for nodes without specific layout (Generic Container)
+                html = `
+                    <div class="flex flex-wrap gap-4 p-8 border border-gray-700 rounded justify-center relative bg-[#1a1a1a] min-w-[300px] min-h-[300px]">
+                        <div class="wf-label">${layoutNode.name}</div>
+                        ${layoutNode.children ? layoutNode.children.map(child => `
+                            ${box(child.id, child.name, 'w-32 h-32 flex items-center justify-center p-2 text-center text-xs')}
+                                <i data-lucide="box" class="w-8 h-8 text-gray-600 mb-2"></i>
+                                <span>${child.desc || ''}</span>
+                            ${closeBox}
+                        `).join('') : '<div class="text-gray-500">無子元件</div>'}
+                    </div>
+                `;
+            }
+
+            wfWrapper.innerHTML = html;
+            container.appendChild(wfWrapper);
+        }
+
+        function renderTreeView(container) {
+            const rootEl = document.createElement('div');
+            rootEl.className = "p-8 min-w-max";
+            const build = (n) => {
+                const wrap = document.createElement('div');
+                wrap.className = "pl-6 border-l border-[#444] ml-2";
+                if(n.id === 'root') wrap.className = "";
+                
+                const item = document.createElement('div');
+                item.className = `h-tree-item ${n.id === selectedNodeId ? 'active' : ''}`;
+                item.onclick = (e) => { e.stopPropagation(); selectNode(n.id); };
+                item.innerHTML = `<span class="text-sm">${n.name}</span>`;
+                wrap.appendChild(item);
+
+                if(n.children) n.children.forEach(c => wrap.appendChild(build(c)));
+                return wrap;
+            };
+            container.appendChild(build(specData));
+        }
+
+        function renderColumnView(container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "column-view";
+            specData.children.forEach(mode => {
+                const col = document.createElement('div');
+                col.className = "column";
+                col.innerHTML = `<div class="column-header">${mode.name}</div>`;
+                
+                const addCards = (n) => {
+                    if(n.children) n.children.forEach(c => {
+                        const card = document.createElement('div');
+                        card.className = `column-card ${c.id === selectedNodeId ? 'active' : ''}`;
+                        card.onclick = (e) => { e.stopPropagation(); selectNode(c.id); };
+                        card.innerHTML = `<div class="font-bold text-xs mb-1">${c.name}</div><div class="text-[10px] text-gray-500 truncate">${c.desc||''}</div>`;
+                        col.appendChild(card);
+                        if(c.children) c.children.forEach(sub => {
+                            const subCard = document.createElement('div');
+                            subCard.className = `column-card ml-4 border-l-2 border-l-[#FF9900] ${sub.id === selectedNodeId ? 'active' : ''}`;
+                            subCard.onclick = (e) => { e.stopPropagation(); selectNode(sub.id); };
+                            subCard.innerHTML = `<div class="text-xs text-gray-300">${sub.name}</div>`;
+                            col.appendChild(subCard);
+                        });
+                    });
+                };
+                addCards(mode);
+                wrapper.appendChild(col);
+            });
+            container.appendChild(wrapper);
+        }
+
+        // Initial
+        renderTreeNav();
+        selectNode('root');
+        setView('wireframe');
     </script>
 </body>
 </html>
